@@ -1,0 +1,98 @@
+import { useState, useEffect } from "react";
+import { format, differenceInCalendarDays, isAfter, isSameDay, parseISO } from "date-fns";
+
+const scheduleData = [
+  { date: "2025-05-01", day: "Thursday", schedule: ["English 1", "French 2", "Art Yellow"] },
+  { date: "2025-05-02", day: "Friday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-05", day: "Monday", schedule: ["English 1", "French 2", "Art Yellow", "Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-06", day: "Tuesday", schedule: ["English 1", "French 2", "Art Yellow"] },
+  { date: "2025-05-07", day: "Wednesday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-08", day: "Thursday", schedule: ["English 1", "French 2", "Art Yellow"] },
+  { date: "2025-05-09", day: "Friday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-12", day: "Monday", schedule: ["English 1", "French 2", "Art Yellow", "Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-13", day: "Tuesday", schedule: ["English 1", "French 2", "Art Yellow"] },
+  { date: "2025-05-14", day: "Wednesday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-15", day: "Thursday", schedule: ["English 1", "French 2", "Art Yellow"] },
+  { date: "2025-05-16", day: "Friday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
+  { date: "2025-05-20", day: "Tuesday", schedule: ["English 1", "French 2", "Art Yellow"] },
+  { date: "2025-05-21", day: "Wednesday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] }
+];
+
+export default function MayScheduleTracker() {
+  const [checked, setChecked] = useState({});
+  const today = new Date();
+  const endDate = parseISO("2025-05-21");
+
+  const remainingClasses = {};
+  const futureSchedules = scheduleData.filter(({ date }) => isAfter(parseISO(date), today) || isSameDay(parseISO(date), today));
+
+  futureSchedules.forEach(({ date, schedule }) => {
+    const d = parseISO(date);
+    if (isAfter(d, today) || isSameDay(d, today)) {
+      schedule.forEach(cls => {
+        remainingClasses[cls] = (remainingClasses[cls] || 0) + 1;
+      });
+    }
+  });
+
+  const remainingDays = differenceInCalendarDays(endDate, today) + 1;
+  const remainingWeekdays = futureSchedules.filter(({ date }) => {
+    const d = parseISO(date);
+    return d.getDay() !== 0 && d.getDay() !== 6;
+  }).length;
+
+  const weeksLeft = new Set(futureSchedules.map(({ date }) => {
+    const d = parseISO(date);
+    return format(d, 'yyyy-ww');
+  })).size;
+
+  const handleCheck = (date, cls) => {
+    setChecked(prev => ({
+      ...prev,
+      [date]: {
+        ...prev[date],
+        [cls]: !prev[date]?.[cls]
+      }
+    }));
+  };
+
+  return (
+    <div className="p-4 space-y-6">
+      <h1 className="text-2xl font-bold text-center">Days Until End of School!</h1>
+
+      <div className="bg-gray-100 p-4 rounded-xl shadow space-y-2">
+        <p><strong>Days left:</strong> {remainingDays}</p>
+        <p><strong>Weekdays left:</strong> {remainingWeekdays}</p>
+        <p><strong>Weeks left:</strong> {weeksLeft}</p>
+        <div>
+          <strong>Remaining classes:</strong>
+          <ul className="list-disc list-inside">
+            {Object.entries(remainingClasses).map(([cls, count]) => (
+              <li key={cls}>{cls}: {count}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {scheduleData.map(({ date, day, schedule }) => (
+        <div key={date} className="border rounded-2xl shadow p-4">
+          <h2 className="text-xl font-semibold mb-2">{day}, {date}</h2>
+          <ul className="grid grid-cols-2 gap-2">
+            {schedule.map(cls => (
+              <li key={cls}>
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    checked={!!checked[date]?.[cls]}
+                    onChange={() => handleCheck(date, cls)}
+                  />
+                  <span className={checked[date]?.[cls] ? "line-through text-gray-500" : ""}>{cls}</span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
