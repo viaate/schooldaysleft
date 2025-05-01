@@ -1,98 +1,83 @@
-import { useState, useEffect } from "react";
-import { format, differenceInCalendarDays, isAfter, isSameDay, parseISO } from "date-fns";
-
-const scheduleData = [
-  { date: "2025-05-01", day: "Thursday", schedule: ["English 1", "French 2", "Art Yellow"] },
-  { date: "2025-05-02", day: "Friday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-05", day: "Monday", schedule: ["English 1", "French 2", "Art Yellow", "Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-06", day: "Tuesday", schedule: ["English 1", "French 2", "Art Yellow"] },
-  { date: "2025-05-07", day: "Wednesday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-08", day: "Thursday", schedule: ["English 1", "French 2", "Art Yellow"] },
-  { date: "2025-05-09", day: "Friday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-12", day: "Monday", schedule: ["English 1", "French 2", "Art Yellow", "Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-13", day: "Tuesday", schedule: ["English 1", "French 2", "Art Yellow"] },
-  { date: "2025-05-14", day: "Wednesday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-15", day: "Thursday", schedule: ["English 1", "French 2", "Art Yellow"] },
-  { date: "2025-05-16", day: "Friday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] },
-  { date: "2025-05-20", day: "Tuesday", schedule: ["English 1", "French 2", "Art Yellow"] },
-  { date: "2025-05-21", day: "Wednesday", schedule: ["Science 5", "Global Citizenship 6", "PE Purple", "Alg 1 Yr. 2"] }
-];
-
-export default function MayScheduleTracker() {
-  const [checked, setChecked] = useState({});
-  const today = new Date();
-  const endDate = parseISO("2025-05-21");
-
-  const remainingClasses = {};
-  const futureSchedules = scheduleData.filter(({ date }) => isAfter(parseISO(date), today) || isSameDay(parseISO(date), today));
-
-  futureSchedules.forEach(({ date, schedule }) => {
-    const d = parseISO(date);
-    if (isAfter(d, today) || isSameDay(d, today)) {
-      schedule.forEach(cls => {
-        remainingClasses[cls] = (remainingClasses[cls] || 0) + 1;
-      });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>May 2025 Countdown</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      padding: 2rem;
+      color: #333;
     }
-  });
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+    }
+    p {
+      font-size: 1.1rem;
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Countdown to End of School</h1>
+    <p id="daysLeft"></p>
+    <p id="weekdaysLeft"></p>
+    <p id="weeksLeft"></p>
+  </div>
 
-  const remainingDays = differenceInCalendarDays(endDate, today) + 1;
-  const remainingWeekdays = futureSchedules.filter(({ date }) => {
-    const d = parseISO(date);
-    return d.getDay() !== 0 && d.getDay() !== 6;
-  }).length;
+  <script>
+    const scheduleDates = [
+      "2025-05-01", "2025-05-02", "2025-05-05", "2025-05-06", "2025-05-07",
+      "2025-05-08", "2025-05-09", "2025-05-12", "2025-05-13", "2025-05-14",
+      "2025-05-15", "2025-05-16", "2025-05-20", "2025-05-21"
+    ];
 
-  const weeksLeft = new Set(futureSchedules.map(({ date }) => {
-    const d = parseISO(date);
-    return format(d, 'yyyy-ww');
-  })).size;
+    const today = new Date();
+    const endDate = new Date("2025-05-21");
 
-  const handleCheck = (date, cls) => {
-    setChecked(prev => ({
-      ...prev,
-      [date]: {
-        ...prev[date],
-        [cls]: !prev[date]?.[cls]
-      }
-    }));
-  };
+    // Days left including weekends
+    const daysLeft = Math.max(0, Math.ceil((endDate - today) / (1000 * 60 * 60 * 24)) + 1);
 
-  return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl font-bold text-center">Days Until End of School!</h1>
+    // Weekdays left
+    const weekdaysLeft = scheduleDates.filter(dateStr => {
+      const d = new Date(dateStr);
+      return d >= today;
+    }).length;
 
-      <div className="bg-gray-100 p-4 rounded-xl shadow space-y-2">
-        <p><strong>Days left:</strong> {remainingDays}</p>
-        <p><strong>Weekdays left:</strong> {remainingWeekdays}</p>
-        <p><strong>Weeks left:</strong> {weeksLeft}</p>
-        <div>
-          <strong>Remaining classes:</strong>
-          <ul className="list-disc list-inside">
-            {Object.entries(remainingClasses).map(([cls, count]) => (
-              <li key={cls}>{cls}: {count}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
+    // Weeks left (based on calendar week numbers)
+    const weeksSet = new Set(
+      scheduleDates.filter(dateStr => new Date(dateStr) >= today).map(dateStr => {
+        const d = new Date(dateStr);
+        return `${d.getFullYear()}-W${String(getWeekNumber(d)).padStart(2, '0')}`;
+      })
+    );
 
-      {scheduleData.map(({ date, day, schedule }) => (
-        <div key={date} className="border rounded-2xl shadow p-4">
-          <h2 className="text-xl font-semibold mb-2">{day}, {date}</h2>
-          <ul className="grid grid-cols-2 gap-2">
-            {schedule.map(cls => (
-              <li key={cls}>
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={!!checked[date]?.[cls]}
-                    onChange={() => handleCheck(date, cls)}
-                  />
-                  <span className={checked[date]?.[cls] ? "line-through text-gray-500" : ""}>{cls}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
-  );
-}
+    const weeksLeft = weeksSet.size;
+
+    function getWeekNumber(d) {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+    }
+
+    document.getElementById("daysLeft").textContent = `Days left (including weekends): ${daysLeft}`;
+    document.getElementById("weekdaysLeft").textContent = `Weekdays with school left: ${weekdaysLeft}`;
+    document.getElementById("weeksLeft").textContent = `Weeks left: ${weeksLeft}`;
+  </script>
+</body>
+</html>
